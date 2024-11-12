@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Created on: 09.11.2024
+
+@author: dmitry
+"""
+
 import os
 import sys
 from multiprocessing import Process
