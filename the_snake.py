@@ -187,12 +187,12 @@ class Snake(GameObject):
 def handle_keys(game_object):
     """Функция обработки действий пользователя"""
     # Словарь направлений и нажатий, не применён.
-    controls = {
-        (UP, pg.K_UP): UP,
-        (DOWN, pg.K_DOWN): DOWN,
-        (LEFT, pg.K_LEFT): LEFT,
-        (RIGHT, pg.K_RIGHT): RIGHT,
-    }
+    # controls = {
+    #     (UP, pg.K_UP): UP,
+    #     (DOWN, pg.K_DOWN): DOWN,
+    #     (LEFT, pg.K_LEFT): LEFT,
+    #     (RIGHT, pg.K_RIGHT): RIGHT,
+    # }
 
     for event in pg.event.get():
 
