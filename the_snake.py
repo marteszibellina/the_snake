@@ -38,6 +38,18 @@ SNAKE_COLOR = (0, 255, 0)
 # Скорость движения змейки:
 SPEED = 20
 
+# Словарь направлений и нажатий.
+CONTROLS = {
+    (RIGHT, pg.K_UP): UP,  # Змейка вправо, можно вверх
+    (LEFT, pg.K_UP): UP,  # Змейка влево, можно вверх
+    (UP, pg.K_LEFT): LEFT,  # Змейка вверх, можно влево
+    (DOWN, pg.K_LEFT): LEFT,  # Змейка вниз, можно влево
+    (UP, pg.K_RIGHT): RIGHT,  # Змейка вверх, можно вправо
+    (DOWN, pg.K_RIGHT): RIGHT,  # Змейка вниз, можно вправо
+    (LEFT, pg.K_DOWN): DOWN,  # Змейка влево, можно вниз
+    (RIGHT, pg.K_DOWN): DOWN,  # Змейка вправо, можно вниз
+}
+
 # Настройка игрового окна:
 screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
 
@@ -52,10 +64,10 @@ class GameObject:
     """Класс всех объектов"""
 
     def __init__(
-        self,
-        position=SCREEN_CENTER,
-        body_color=BOARD_BACKGROUND_COLOR,
-        border_color=BORDER_COLOR
+            self,
+            position=SCREEN_CENTER,
+            body_color=BOARD_BACKGROUND_COLOR,
+            border_color=BORDER_COLOR
     ) -> None:
         self.position = position
         self.body_color = body_color
@@ -82,11 +94,12 @@ class GameObject:
 class Apple(GameObject):
     """Класс Яблока"""
 
-    def __init__(  # Dangereous default value [] as an argument.
+    def __init__(  # Dangereous default value [] as an argument. Оставлен None
         self, position=SCREEN_CENTER, body_color=APPLE_COLOR, filled_cells=None
     ) -> None:
         super().__init__(position, body_color)
         self.body_color = body_color
+        # Проверка аргумента и создание списка
         if filled_cells is None:
             filled_cells = []
         self.filled_cells = filled_cells
@@ -101,7 +114,6 @@ class Apple(GameObject):
         """Метод создания яблока в произвольном месте окна"""
         if not filled_cells:
             filled_cells.append(filled_cells)
-            print(filled_cells)
 
         while True:
             self.position = (
@@ -140,21 +152,13 @@ class Snake(GameObject):
         # Отслеживание головы змейки (158)
         self.get_head_position()
         # Метод обновления направления после нажатия на кнопку (162).
-        self.update_direction(self.direction)
+        handle_keys(self)
 
         snake_head_x, snake_head_y = self.get_head_position()
         # Сдвиги по осям X и Y для каждого направления
-        # Словарь направлений:
-        direction_offsets = {
-            RIGHT: (GRID_SIZE, 0),  # сдвиг по X на GRID_SIZE вправо
-            LEFT: (-GRID_SIZE, 0),  # сдвиг по X на GRID_SIZE влево
-            UP: (0, -GRID_SIZE),  # сдвиг по Y на GRID_SIZE вверх
-            DOWN: (0, GRID_SIZE),  # сдвиг по Y на GRID_SIZE вниз
-        }
-
         # Обновляем координаты головы змейки через self.direction
-        snake_head_x += direction_offsets[self.direction][0]
-        snake_head_y += direction_offsets[self.direction][1]
+        snake_head_x += (self.direction[0] * GRID_SIZE)
+        snake_head_y += (self.direction[1] * GRID_SIZE)
 
         # Применяем обёртку по экрану (модуль)
         snake_head_x %= SCREEN_WIDTH
@@ -193,17 +197,6 @@ class Snake(GameObject):
 
 def handle_keys(game_obj):
     """Функция обработки действий пользователя"""
-    # Словарь направлений и нажатий.
-    controls = {
-        (RIGHT, pg.K_UP): UP,  # Змейка вправо, можно вверх
-        (LEFT, pg.K_UP): UP,  # Змейка влево, можно вверх
-        (UP, pg.K_LEFT): LEFT,  # Змейка вверх, можно влево
-        (DOWN, pg.K_LEFT): LEFT,  # Змейка вниз, можно влево
-        (UP, pg.K_RIGHT): RIGHT,  # Змейка вверх, можно вправо
-        (DOWN, pg.K_RIGHT): RIGHT,  # Змейка вниз, можно вправо
-        (LEFT, pg.K_DOWN): DOWN,  # Змейка влево, можно вниз
-        (RIGHT, pg.K_DOWN): DOWN,  # Змейка вправо, можно вниз
-    }
 
     for event in pg.event.get():
 
@@ -217,9 +210,9 @@ def handle_keys(game_obj):
             if event.type == pg.KEYDOWN:
                 # Создание нового направления.
                 # Для направления, кнопки, нового напрвления в значениях
-                for (dicrection, key), new_direction in controls.items():
-                    if game_obj.direction == dicrection and event.key == key:
-                        game_obj.update_direction(new_direction)
+                new_direction = CONTROLS.get(
+                    (game_obj.direction, event.key), game_obj.direction)
+                game_obj.update_direction(new_direction)
 
 
 def main():
