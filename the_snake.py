@@ -67,20 +67,20 @@ class GameObject:
             self,
             position=SCREEN_CENTER,
             body_color=BOARD_BACKGROUND_COLOR,
-            border_color=BORDER_COLOR
     ) -> None:
         self.position = position
         self.body_color = body_color
-        self.border_color = border_color
 
-    def draw_block(self, position, color=None, border_color=None) -> None:
+    def draw_block(
+            self,
+            position,
+            color=None,
+            border_color=BORDER_COLOR,
+    ) -> None:
         """Метод отрисовки одного блока"""
-        if color is None:
-            color = color or self.body_color
-        if border_color is None:
-            border_color = self.border_color
+        color = color or self.body_color
         # Отрисовка через контур и заливку, имеющие общие координаты.
-        rect_line = pg.Rect(position[0], position[1], GRID_SIZE, GRID_SIZE)
+        rect_line = pg.Rect(position, (GRID_SIZE, GRID_SIZE))
         pg.draw.rect(screen, color, rect_line)  # Контур.
         pg.draw.rect(screen, border_color, rect_line, 1)  # Заливка.
 
@@ -94,17 +94,12 @@ class GameObject:
 class Apple(GameObject):
     """Класс Яблока"""
 
-    def __init__(  # Dangereous default value [] as an argument. Оставлен None
-        self, position=SCREEN_CENTER, body_color=APPLE_COLOR, filled_cells=None
+    def __init__(  # Pylint: Dangereous default value [] as an argument.
+        self, position=SCREEN_CENTER, body_color=APPLE_COLOR, filled_cells=[]
     ) -> None:
         super().__init__(position, body_color)
-        self.body_color = body_color
-        # Проверка аргумента и создание списка
-        if filled_cells is None:
-            filled_cells = []
-        self.filled_cells = filled_cells
         # Метод создания яблока в произвольном месте окна (77).
-        self.randomize_position(self.filled_cells)
+        self.randomize_position(filled_cells)
 
     def draw(self):
         """Отрисовка яблока"""
@@ -112,8 +107,8 @@ class Apple(GameObject):
 
     def randomize_position(self, filled_cells):
         """Метод создания яблока в произвольном месте окна"""
-        if not filled_cells:
-            filled_cells.append(filled_cells)
+        # Значение filled_cells запоминается ровно до конца исполнения метода.
+        # При каждом вызове метода предаётся аргумент для данного параметра.
 
         while True:
             self.position = (
@@ -137,7 +132,7 @@ class Snake(GameObject):
 
     def draw(self):
         """Отрисовка змейки"""
-        self.draw_block(self.positions[0], self.body_color)
+        self.draw_block(self.get_head_position(), self.body_color)
 
         # Затирание последнего сегмента
         if self.last:
@@ -197,7 +192,6 @@ class Snake(GameObject):
 
 def handle_keys(game_obj):
     """Функция обработки действий пользователя"""
-
     for event in pg.event.get():
 
         if event.type == pg.QUIT:
@@ -210,9 +204,9 @@ def handle_keys(game_obj):
             if event.type == pg.KEYDOWN:
                 # Создание нового направления.
                 # Для направления, кнопки, нового напрвления в значениях
-                new_direction = CONTROLS.get(
+                snake_direction = CONTROLS.get(
                     (game_obj.direction, event.key), game_obj.direction)
-                game_obj.update_direction(new_direction)
+                game_obj.update_direction(snake_direction)
 
 
 def main():
