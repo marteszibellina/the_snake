@@ -147,7 +147,6 @@ class Snake(GameObject):
         # Отслеживание головы змейки (158)
         self.get_head_position()
         # Метод обновления направления после нажатия на кнопку (162).
-        handle_keys(self)
 
         snake_head_x, snake_head_y = self.get_head_position()
         # Сдвиги по осям X и Y для каждого направления
