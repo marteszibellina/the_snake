@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Created on: 14.11.2024
-
-@author: dmitry
+Author: @marteszibelina
+Created on: 29.04.2025
+Project: The Snake Game
+File: Game
 """
 
 
@@ -79,7 +80,6 @@ class GameObject:
     ) -> None:
         """Метод отрисовки одного блока"""
         color = color or self.body_color
-        # Отрисовка через контур и заливку, имеющие общие координаты.
         rect_line = pg.Rect(position, (GRID_SIZE, GRID_SIZE))
         pg.draw.rect(screen, color, rect_line)  # Контур.
         pg.draw.rect(screen, border_color, rect_line, 1)  # Заливка.
@@ -94,11 +94,10 @@ class GameObject:
 class Apple(GameObject):
     """Класс Яблока"""
 
-    def __init__(  # Pylint: Dangereous default value [] as an argument.
+    def __init__(
         self, position=SCREEN_CENTER, body_color=APPLE_COLOR, filled_cells=[]
     ) -> None:
         super().__init__(position, body_color)
-        # Метод создания яблока в произвольном месте окна (77).
         self.randomize_position(filled_cells)
 
     def draw(self):
@@ -107,9 +106,6 @@ class Apple(GameObject):
 
     def randomize_position(self, filled_cells):
         """Метод создания яблока в произвольном месте окна"""
-        # Значение filled_cells запоминается ровно до конца исполнения метода.
-        # При каждом вызове метода предаётся аргумент для данного параметра.
-
         while True:
             self.position = (
                 randrange(0, SCREEN_WIDTH, GRID_SIZE),
@@ -144,27 +140,18 @@ class Snake(GameObject):
 
     def move(self):
         """Логика движения змейки"""
-        # Отслеживание головы змейки (158)
         self.get_head_position()
-        # Метод обновления направления после нажатия на кнопку (162).
 
         snake_head_x, snake_head_y = self.get_head_position()
-        # Сдвиги по осям X и Y для каждого направления
-        # Обновляем координаты головы змейки через self.direction
         snake_head_x += (self.direction[0] * GRID_SIZE)
         snake_head_y += (self.direction[1] * GRID_SIZE)
 
-        # Применяем обёртку по экрану (модуль)
         snake_head_x %= SCREEN_WIDTH
         snake_head_y %= SCREEN_HEIGHT
 
-        # Передача координат новой головы в следующий момент.
         new_head_position = (snake_head_x, snake_head_y)
-        # Вставка нового значения головы в следующий момент.
         self.positions.insert(0, new_head_position)
-        # Передача координат хвоста.
         self.last = self.positions[-1]
-        # Стирание хвоста.
         self.last = self.positions.pop()
 
     def get_head_position(self):
@@ -183,6 +170,7 @@ class Snake(GameObject):
 
     def reset(self):
         """Логика сброса позиции змейки"""
+        screen.fill(BOARD_BACKGROUND_COLOR)
         self.length = 1
         self.positions = [self.position]
         self.direction = choice(self.directions)
@@ -201,35 +189,89 @@ def handle_keys(game_obj):
                 pg.quit()
                 raise SystemExit
             if event.type == pg.KEYDOWN:
-                # Создание нового направления.
-                # Для направления, кнопки, нового напрвления в значениях
                 snake_direction = CONTROLS.get(
                     (game_obj.direction, event.key), game_obj.direction)
                 game_obj.update_direction(snake_direction)
 
 
+def draw_text(text, font, color, x, y, border_color=None):
+    """Функция для отрисовки текста с рамкой"""
+    label = font.render(text, True, color)
+    label_rect = label.get_rect(topleft=(x, y))
+    
+    if border_color:
+        # Рисуем рамку
+        border_rect = label_rect.inflate(10, 10)
+        pg.draw.rect(screen, border_color, border_rect)
+    screen.blit(label, (x, y))
+
+
 def main():
-    """Инициализация pygame"""
+    """Основная логика игры"""
     pg.init()
+
+    global screen
+    screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pg.display.set_caption("The Snake Game")
+
+    clock = pg.time.Clock()
+
+    font = pg.font.Font(None, 36)
+    game_state = "MENU"
+
+    score = 0
     snake_player = Snake()
     apple = Apple(filled_cells=snake_player.positions)
 
     while True:
         clock.tick(SPEED)
-        handle_keys(snake_player)
-        snake_player.move()
-        snake_player.draw()
 
-        if snake_player.get_head_position() in snake_player.positions[1:]:
+        if game_state == "MENU":
             screen.fill(BOARD_BACKGROUND_COLOR)
-            snake_player.reset()
-            apple.randomize_position(filled_cells=snake_player.positions)
-        elif snake_player.get_head_position() == apple.position:
-            snake_player.grow()
-            apple.randomize_position(filled_cells=snake_player.positions)
+            draw_text("The Snake Game", font, (255, 255, 255), SCREEN_WIDTH // 3, SCREEN_HEIGHT // 4)
+            draw_text("Press SPACE to START", font, (255, 255, 255), SCREEN_WIDTH // 3.5, SCREEN_HEIGHT // 2.5)
+            draw_text("Press ESC to QUIT", font, (255, 255, 255), SCREEN_WIDTH // 3, SCREEN_HEIGHT // 2)
 
-        apple.draw()
+        elif game_state == "RUNNING":
+            handle_keys(snake_player)
+            snake_player.move()
+
+            if snake_player.get_head_position() in snake_player.positions[1:]:
+                game_state = "GAME_OVER"
+                score = 0
+            elif snake_player.get_head_position() == apple.position:
+                snake_player.grow()
+                apple.randomize_position(filled_cells=snake_player.positions)
+                score += 1
+
+            snake_player.draw()
+            apple.draw()
+            pg.draw.rect(screen, BOARD_BACKGROUND_COLOR, (10, 10, 95, 20))
+            draw_text(f"Score: {score}", font, (255, 255, 255), 10, 10, BORDER_COLOR)
+
+        elif game_state == "GAME_OVER":
+            screen.fill(BOARD_BACKGROUND_COLOR)
+            draw_text("Game Over!", font, (255, 0, 0), SCREEN_WIDTH // 3, SCREEN_HEIGHT // 4)
+            draw_text("Press Space to START", font, (255, 255, 255), SCREEN_WIDTH // 3.5, SCREEN_HEIGHT // 2.5)
+            draw_text("Press ESC to QUIT", font, (255, 255, 255), SCREEN_WIDTH // 3.5, SCREEN_HEIGHT // 2)
+
         pg.display.update()
+
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                pg.quit()
+                raise SystemExit
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_ESCAPE:
+                    pg.quit()
+                    raise SystemExit
+                if game_state == "MENU" and event.key == pg.K_SPACE:
+                    game_state = "RUNNING"
+                    screen.fill(BOARD_BACKGROUND_COLOR)
+                elif game_state == "GAME_OVER" and event.key == pg.K_SPACE:
+                    game_state = "RUNNING"
+                    snake_player.reset()
+                    apple.randomize_position(filled_cells=snake_player.positions)
 
 
 if __name__ == "__main__":
